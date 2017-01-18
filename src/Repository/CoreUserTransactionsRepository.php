@@ -116,7 +116,7 @@ class CoreUserTransactionsRepository extends EntityRepository
                 ->getSingleResult();     
         } catch (\Exception $ex) {
             throw new \InvalidArgumentException(
-                    ' el usuario '.$username.' no existe o esta deshabilitado');
+                    ' El usuario '.$username.' no existe o esta deshabilitado');
         }
     }  
 
