@@ -19,15 +19,23 @@ use Adteam\Core\Credits\Result\Entity\OauthUsers;
 
 class CoreFileUploadsRepository extends EntityRepository{
     
-    public function create($items,$data,$filename,$identity)
+    /**
+     * 
+     * @param type $items
+     * @param type $data
+     * @param type $filename
+     * @param type $identity
+     * @return type
+     */
+    public function create($items,$data,$filename,$identity,$entity)
     {
         $currentRepo = $this; 
         $this->_em->transactional(
-            function ($em) use($items,$data,$identity,$filename,$currentRepo) {
+            function ($em) use($items,$data,$identity,$filename,$currentRepo,$entity) {
                 $user = $currentRepo->getUser($identity['user_id']);
                 $id = $currentRepo->InsertFileUpload($data, $user, $filename); 
                 foreach ($items as $key => $item){
-                    $currentRepo->insertItems($key,$item,$id);                    
+                    $currentRepo->insertItems($key,$item,$id,$entity);                    
                 }
             }
         );
@@ -54,11 +62,16 @@ class CoreFileUploadsRepository extends EntityRepository{
         return $entities->getId();
     }
 
-        
-    public function insertItems($key,$data,$fileId)
+    /**
+     * 
+     * @param type $key
+     * @param type $data
+     * @param type $fileId
+     */    
+    public function insertItems($key,$data,$fileId,$entity)
     {
         $Table = $this->_em->getRepository(CoreUserTransactions::class);
-        $Table->create($key,$data,CoreFileUploads::TYPE_RESULTS,$fileId);          
+        $Table->create($key,$data,CoreFileUploads::TYPE_RESULTS,$fileId,$entity);          
     }   
     
     /**
@@ -87,6 +100,10 @@ class CoreFileUploadsRepository extends EntityRepository{
         }
     }
     
+    /**
+     * 
+     * @return type
+     */
     public function getErrors()
     {
         return $this->_em->getRepository(CoreUserTransactions::class)

@@ -16,7 +16,6 @@ namespace Adteam\Core\Credits\Result\Repository;
 use Doctrine\ORM\EntityRepository;
 use Adteam\Core\Credits\Result\Entity\OauthUsers;
 use Adteam\Core\Credits\Result\Entity\CoreUserTransactions;
-use Adteam\Core\Credits\Result\Entity\PmrRules;
 
 class CoreUserTransactionsRepository extends EntityRepository
 {
@@ -33,14 +32,14 @@ class CoreUserTransactionsRepository extends EntityRepository
      * @param type $fileType
      * @param type $fileId
      */
-    public function create($key,$data,$fileType,$fileId)
+    public function create($key,$data,$fileType,$fileId,$entity)
     {
         try{
             $user = $this->getUser($data['user_id']);
             $data['user_id'] = $user['id'];
             $userId = $this->_em->getReference(OauthUsers::class, $user['id']);
             $this->validate($data);
-            $this->insertPmrRules($data,$userId);
+            $this->insertPmrRules($data,$userId,$entity);
             $balance = $this->getBalanceSnapshot($data['user_id']) ?: 0;
             $newTransaction = new CoreUserTransactions();
             $newTransaction->setUser($userId);
@@ -65,17 +64,18 @@ class CoreUserTransactionsRepository extends EntityRepository
      * @param type $user
      * @throws \InvalidArgumentException
      */
-    public function insertPmrRules($data,$user)
+    public function insertPmrRules($data,$user,$entity)
     {
         $data['user_id'] =$user;
-        $Table = $this->_em->getRepository(PmrRules::class);
+        $Table = $this->_em->getRepository($entity);
         if($Table->getUniqueKey($data)){
-            $this->_em->getRepository(PmrRules::class)->create($data); 
+            $this->_em->getRepository($entity)->create($data); 
         }else{
             throw new \InvalidArgumentException(
                     'El usuario '.$data['user_id']->getUsername().
                     ' no debe de tener mas de un registro para el mes '.
-                    $data['mes'].' año '.$data['anio']);             
+                    $data['mes'].' año '.$data['anio'].' insentivo '.
+                    $data['insentivo']);             
         }
     }
 

@@ -30,7 +30,8 @@ class CoreFileUploads
     /**
      * Enum value from $fileType "results".
      */
-    const TYPE_RESULTS = 'results';    
+    const TYPE_RESULTS = 'results'; 
+    
     /**
      * @var integer
      *

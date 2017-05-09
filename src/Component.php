@@ -1,5 +1,4 @@
 <?php
-
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -8,38 +7,98 @@
 
 namespace Adteam\Core\Credits\Result;
 
-/**
- * Description of Import
- *
- * @author dev
- */
 use Zend\ServiceManager\ServiceManager;
 use Doctrine\ORM\EntityManager;
 use Adteam\Core\Credits\Result\Entity\CoreFileUploads;
 use Zend\View\Helper\ViewModel;
+use Adteam\Core\Common\JsonPaginator;
+use Adteam\Service\Importcsv;
 
-class Result 
+/**
+ * Description of Command
+ *
+ * @author dev
+ */
+ 
+class Component
 {
+    /**
+     *
+     * @var type 
+     */
+    protected $paginator;
+    
+    /**
+     *
+     * @var type 
+     */
+    protected $em;
+    
+    /**
+     *
+     * @var type 
+     */
     protected $services;
     
+    /**
+     *
+     * @var type 
+     */
     protected $ViewHelperManager;
 
-
+    /**
+     *
+     * @var type 
+     */
+    protected $csv;
+    
+    /**
+     * 
+     * @param ServiceManager $services
+     */
     public function __construct(ServiceManager $services)
     {
         $this->services = $services;
+        $this->em = $services->get(EntityManager::class);
         $this->ViewHelperManager = $services->get('ViewHelperManager');
-    }    
+        $this->paginator = new JsonPaginator();
+        $this->csv = $services->get(Importcsv::class);
+    } 
     
-    public function create($data,$items,$filename)
+    /**
+     * 
+     * @param type $data
+     * @param type $items
+     * @param type $filename
+     * @return type
+     */
+    public function create($data,$filename)
     {
-        $this->hasColumnsRequired($items);
+        $config = $this->getConfig();
+        $items = $this->csv->importCsv($filename);
         $result = $this->getEntitieManager()->getRepository(CoreFileUploads::class)
-                    ->create($items,$data,$filename,$this->getIdentity()); 
+                    ->create($items,$data,$filename,$this->getIdentity(),$config['entity']); 
         $this->createLogFile($result, $filename); 
         return $this->setResponseCreate($result, $filename);
     }
     
+    /**
+     * 
+     * @param type $params
+     * @return type
+     */
+    public function getQbCollection($params)
+    {
+        $config = $this->getConfig();
+        $query = $this->em->getRepository($config['entity'])->getQbCollection();  
+        $this->paginator->setAdapterPaginatorOrm($query,$params);
+        return $this->paginator->getResponse();        
+    }        
+
+    /**
+     * 
+     * @return type
+     */
     public function getIdentity()
     {
         return $this->services->get('authentication')->getIdentity()
@@ -78,46 +137,7 @@ class Result
     {
         return $this->services->get(EntityManager::class);
     }
-    
-    /**
-     * 
-     * @param type $item
-     * @return type
-     */
-    public function getUniqueKey($item){
-        $config = $this->getConfig();
-        $isUnikey = false;
-        try{
-            $this->_em->getRepository($config['entity'])
-                ->createQueryBuilder('T')
-                ->select('T')
-                ->innerJoin('T.user', 'R')
-                ->where('T.user = :user_id AND T.mes = :mes AND T.anio = :anio')
-                ->setParameter('user_id', $item['user_id'])
-                ->setParameter('mes', $item['mes'])
-                ->setParameter('anio', $item['anio'])    
-                ->getQuery()
-                ->getSingleResult();  
-        } catch (\Exception $ex) {
-            $isUnikey = true;
-        }
-        return $isUnikey;
-
-    }    
-    
-    public function hasColumnsRequired($items)
-    {
-        $columns = $this->getColumns();
-        $items->rewind();
-        $current = $items->current();
-        foreach ($columns as $colum){
-            if(!isset($current[$colum])||count($columns)!==count($current)){
-                throw new \Exception(
-                        'Las columnas necesarias no coinciden con las definidas'
-                        ,422);
-            }
-        }
-    }    
+ 
     
     /**
      * Create Log File for Adjustment Transactions
@@ -128,7 +148,7 @@ class Result
      */
     private function createLogFile($errors, $fileName)
     {
-        if(count($errors)>0){
+        if(count($errors)>0){            
             $config =  $this->services->get('config');
             $pathinfo = pathinfo($fileName['tmp_name']); 
             $fp = fopen(
@@ -164,6 +184,7 @@ class Result
                     );
         }
         return $response;
-    }     
-    
+    }
+  
 }
+

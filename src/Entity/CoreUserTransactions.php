@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity(repositoryClass="Adteam\Core\Credits\Result\Repository\CoreUserTransactionsRepository")
  */
 class CoreUserTransactions
-{
+{    
     /**
      * Enum value from $type "adjustment"
      */
@@ -96,7 +96,7 @@ class CoreUserTransactions
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="applied_at", type="datetime", precision=0, scale=0, nullable=true, unique=false)
+     * @ORM\Column(name="applied_at", type="datetime", precision=0, scale=0, nullable=false, unique=false)
      */
     private $appliedAt;
 
@@ -292,7 +292,7 @@ class CoreUserTransactions
     /**
      * Set user
      *
-     * @param \Adteam\Core\Credits\Result\Entity\OauthUsers $user
+     * @param \Application\Entity\OauthUsers $user
      *
      * @return CoreUserTransactions
      */
@@ -313,4 +313,3 @@ class CoreUserTransactions
         return $this->user;
     }
 }
-
