@@ -32,19 +32,19 @@ class CoreUserTransactionsRepository extends EntityRepository
      * @param type $fileType
      * @param type $fileId
      */
-    public function create($key,$data,$fileType,$fileId,$entity)
+    public function create($key,$data,$config)
     {
         try{
             $user = $this->getUser($data['user_id']);
             $data['user_id'] = $user['id'];
             $userId = $this->_em->getReference(OauthUsers::class, $user['id']);
-            $this->validate($data);
-            $this->insertPmrRules($data,$userId,$entity);
+            $this->validate($data,$config);
+            $this->insertPmrRules($data,$userId,$config['entity']);
             $balance = $this->getBalanceSnapshot($data['user_id']) ?: 0;
             $newTransaction = new CoreUserTransactions();
             $newTransaction->setUser($userId);
-            $newTransaction->setAmount($data['puntos']);
-            $newTransaction->setCorrelationId($fileId); //@todo insert file Id
+            $newTransaction->setAmount($data[$config['inflow']]);
+            $newTransaction->setCorrelationId($config['fileId']); //@todo insert file Id
             $newTransaction->setBalanceSnapshot($balance);
             $newTransaction->setDetails(''); //@todo insert details if requested
             $newTransaction->setType(CoreUserTransactions::TYPE_RESULT);
@@ -74,8 +74,7 @@ class CoreUserTransactionsRepository extends EntityRepository
             throw new \InvalidArgumentException(
                     'El usuario '.$data['user_id']->getUsername().
                     ' no debe de tener mas de un registro para el mes '.
-                    $data['mes'].' año '.$data['anio'].' insentivo '.
-                    $data['insentivo']);             
+                    $data['mes'].' año '.$data['anio']);             
         }
     }
 
@@ -83,8 +82,8 @@ class CoreUserTransactionsRepository extends EntityRepository
      * 
      * @param type $data
      */
-    public function validate($data){
-        $this->isNumeric($data);
+    public function validate($data,$config){
+        $this->isNumeric($data,$config);
         $this->hasRegex(
                 '/^(19|20)\d\d$/', 
                 $data, 'anio',
@@ -128,11 +127,11 @@ class CoreUserTransactionsRepository extends EntityRepository
      * @param type $value
      * @throws \InvalidArgumentException
      */
-    public function isNumeric($data)
+    public function isNumeric($data,$config)
     {
         if(!(is_numeric($data['mes'])
                 &&is_numeric($data['anio'])
-                &&is_numeric($data['puntos']))){
+                &&is_numeric($data[$config['inflow']]))){
            throw new \InvalidArgumentException(
                 'El valor mes, año y puntos se requiere numerico');
         }

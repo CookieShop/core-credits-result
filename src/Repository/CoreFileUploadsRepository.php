@@ -27,15 +27,15 @@ class CoreFileUploadsRepository extends EntityRepository{
      * @param type $identity
      * @return type
      */
-    public function create($items,$data,$filename,$identity,$entity)
+    public function create($items,$data,$filename,$identity,$config)
     {
         $currentRepo = $this; 
         $this->_em->transactional(
-            function ($em) use($items,$data,$identity,$filename,$currentRepo,$entity) {
+            function ($em) use($items,$data,$identity,$filename,$currentRepo,$config) {
                 $user = $currentRepo->getUser($identity['user_id']);
                 $id = $currentRepo->InsertFileUpload($data, $user, $filename); 
                 foreach ($items as $key => $item){
-                    $currentRepo->insertItems($key,$item,$id,$entity);                    
+                    $currentRepo->insertItems($key,$item,$config);                    
                 }
             }
         );
@@ -68,10 +68,10 @@ class CoreFileUploadsRepository extends EntityRepository{
      * @param type $data
      * @param type $fileId
      */    
-    public function insertItems($key,$data,$fileId,$entity)
+    public function insertItems($key,$data,$config)
     {
         $Table = $this->_em->getRepository(CoreUserTransactions::class);
-        $Table->create($key,$data,CoreFileUploads::TYPE_RESULTS,$fileId,$entity);          
+        $Table->create($key,$data,$config);          
     }   
     
     /**

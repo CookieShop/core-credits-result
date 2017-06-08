@@ -75,9 +75,10 @@ class Component
     public function create($data,$filename)
     {
         $config = $this->getConfig();
+        $config['fileId'] =   CoreFileUploads::TYPE_RESULTS; 
         $items = $this->csv->importCsv($filename);
-        $result = $this->getEntitieManager()->getRepository(CoreFileUploads::class)
-                    ->create($items,$data,$filename,$this->getIdentity(),$config['entity']); 
+        $result = $this->getEntitieManager()->getRepository(CoreFileUploads::class)             
+                    ->create($items,$data,$filename,$this->getIdentity(),$config); 
         $this->createLogFile($result, $filename); 
         return $this->setResponseCreate($result, $filename);
     }
